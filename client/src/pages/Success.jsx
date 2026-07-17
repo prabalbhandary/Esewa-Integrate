@@ -1,44 +1,82 @@
 import React from "react";
+import Swal from "sweetalert2";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import Loader from "../components/Loader";
 
-const Success = ({ transaction, loading, onBack }) => {
-  if (loading || !transaction) {
+const Success = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [sale, setSale] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
+
+  const saleId = searchParams.get("sale_id");
+
+  React.useEffect(() => {
+    if (!saleId) {
+      setError("Missing sale ID");
+      setLoading(false);
+      return;
+    }
+
+    const pollSale = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/sales/${saleId}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch sale");
+        }
+        const data = await response.json();
+        setSale(data);
+
+        if (data.status === "paid") {
+          setLoading(false);
+          const latestPayment = data.payment_attempts?.[0];
+          Swal.fire({
+            title: "Payment Successful",
+            text: `Sale #${data.id} has been paid successfully.`,
+            icon: "success",
+            confirmButtonText: "Back to Home",
+            confirmButtonColor: "#2563eb",
+          }).then(() => {
+            navigate("/");
+          });
+        } else if (data.status === "failed") {
+          setLoading(false);
+          Swal.fire({
+            title: "Payment Failed",
+            text: "The payment could not be completed.",
+            icon: "error",
+            confirmButtonText: "Back to Home",
+            confirmButtonColor: "#2563eb",
+          }).then(() => {
+            navigate("/");
+          });
+        } else {
+          setTimeout(pollSale, 2000);
+        }
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+        Swal.fire({
+          title: "Error",
+          text: err.message,
+          icon: "error",
+          confirmButtonText: "Back to Home",
+          confirmButtonColor: "#2563eb",
+        }).then(() => {
+          navigate("/");
+        });
+      }
+    };
+
+    pollSale();
+  }, [saleId, navigate]);
+
+  if (loading) {
     return <Loader />;
   }
 
-  const fields = [
-    { label: "Transaction ID", value: transaction.transaction_uuid },
-    { label: "Status", value: transaction.status },
-    { label: "Total Amount", value: `Rs. ${transaction.total_amount}` },
-  ];
-
-  return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-lg p-8 text-center">
-        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Payment Successful</h1>
-        <p className="text-gray-500 mb-6">Your transaction has been completed successfully.</p>
-        <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200 text-left space-y-4">
-          {fields.map((field) => (
-            <div key={field.label}>
-              <p className="text-sm text-gray-500 mb-1">{field.label}</p>
-              <p className="text-base font-semibold text-gray-800 break-all">{field.value}</p>
-            </div>
-          ))}
-        </div>
-        <button
-          onClick={onBack}
-          className="mt-8 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full shadow-md transition duration-300 cursor-pointer"
-        >
-          Back to Home
-        </button>
-      </div>
-    </div>
-  );
+  return null;
 };
 
 export default Success;
