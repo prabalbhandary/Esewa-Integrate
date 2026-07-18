@@ -1,0 +1,21 @@
+{
+  "name": "esewa-integrate",
+  "version": "1.0.0",
+  "description": "A full-stack payment integration demo using eSewa's payment gateway with a React POS frontend and Express.js backend.",
+  "homepage": "https://github.com/prabalbhandary/Esewa-Integrate#readme",
+  "bugs": {
+    "url": "https://github.com/prabalbhandary/Esewa-Integrate/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prabalbhandary/Esewa-Integrate.git"
+  },
+  "license": "ISC",
+  "author": "Prabal Bhandary",
+  "type": "module",
+  "main": "./server/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npm run dev --prefix ./server"
+  }
+}
